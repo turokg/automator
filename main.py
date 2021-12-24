@@ -1,19 +1,41 @@
 #! /usr/local/bin/python3
 import logging
+import os
 import os.path
+import os.path
+import re
 import shutil
 import time
+from ftplib import FTP
+from pathlib import Path
 
-from ftp import copy
-from settings import (
-    ARCHIVE_DIR, CHECK_PERIOD, DESTINATION_DIR, FILTER_RE, FTP_SERVER,
-    SOURCE_DIR,
-    )
+FTP_SERVER = '192.168.1.1'
+
+FILTER_RE = re.compile(r".+torrent")
+LEAVE_RE = re.compile(r".*ol.*")
+
+SOURCE_DIR = Path("/Users/ek/Downloads/")
+ARCHIVE_DIR = SOURCE_DIR / "archive/"
+DESTINATION_DIR = Path("MOVIES/watch/")
+CHECK_PERIOD = 5
+
+if not os.path.exists(ARCHIVE_DIR):
+    os.mkdir(ARCHIVE_DIR)
 
 logger = logging.getLogger(__name__)
 
 
-def move(destination, *files):
+def copy(src_path, dest_dir):
+    ftp = FTP(FTP_SERVER)
+    ftp.login()
+
+    _, filename = os.path.split(src_path)
+    with open(src_path, "rb") as src:
+        ftp.storbinary(f"STOR {dest_dir}/{filename}", src)
+    ftp.close()
+
+
+def handle(*files, destination):
     for file_ in files:
         try:
             copy(file_, destination)
@@ -26,17 +48,18 @@ def move(destination, *files):
             logger.debug("moved %s to %s", file_, ARCHIVE_DIR)
 
 
-def check_for_files(dir_, filter_re):
+def check_for_files(dir_, filter_re, leave_re):
     files = os.listdir(dir_)
-    target_files = [dir_ / f for f in files if filter_re.match(f)]
+    target_files = [dir_ / f for f in files if
+                    filter_re.match(f) and not leave_re.match(f)]
     return target_files
 
 
 def main():
     while True:
         logger.info("running loop")
-        files = check_for_files(SOURCE_DIR, FILTER_RE)
-        move(DESTINATION_DIR, *files)
+        files = check_for_files(SOURCE_DIR, FILTER_RE, LEAVE_RE)
+        handle(*files, destination=DESTINATION_DIR)
         time.sleep(CHECK_PERIOD)
 
 
