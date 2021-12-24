@@ -5,7 +5,7 @@ SCRIPT ?= /Users/ek/python/automator/main.py
 
 all:
 	@echo "deploy				- setup as a daemon on macos"
-	@echo "stop					- remove daemon"
+	@echo "stop				- remove daemon"
 	@exit 0
 
 deploy:
