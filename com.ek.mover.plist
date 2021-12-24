@@ -12,7 +12,5 @@
         <true/>
         <key>StandardErrorPath</key>
         <string>/Users/ek/automator.err</string>
-        <key>StandardOutPath</key>
-        <string>/Users/ek/automator.log</string>
     </dict>
 </plist>
